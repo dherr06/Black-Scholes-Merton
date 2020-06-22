@@ -40,8 +40,7 @@ class BSM:
                         A[i,i+1] = (-0.5*self.delta_t*i*(self.r - self.q)) - (0.5*self.sigma**2*i**2*self.delta_t)
                 self.grid[:,j] = np.linalg.solve(A,b)
             for i in range(np.size(self.grid[:,j])):
-                if self.grid[i,j] < 0:
-                    self.grid[i,j] = 0
+                self.grid[i,j] = self.evaluate(self.grid[i,j],i)
     
     def get_BC(self,loc,i):
         if loc == 'bottom':
@@ -56,9 +55,15 @@ class BSM:
                 return 0
         elif loc == 'right':
             if self.option_type == 'call':
-                return np.max((self.delta_s*i) - self.K,0)
+                return np.maximum([(self.delta_s*i) - self.K],[0])
             elif self.option_type == 'put':
-                return np.max(self.K - (self.delta_s*i),0)
+                return np.maximum([self.K - (self.delta_s*i)],[0])
             
     def update_sigma(self,sigma):
         self.sigma = sigma
+        
+    def evaluate(self,v,i):
+        if self.option_type == 'call':
+            return np.maximum([v],[(self.delta_s*i) - self.K])
+        elif self.option_type == 'put':
+            return np.maximum([v],[self.K - (self.delta_s*i)])
